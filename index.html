@@ -3,12 +3,148 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Valley Lite (Web)</title>
-<style>html,body{margin:0;height:100%;background:#0f1418;color:#eaf2f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",Arial}canvas{width:100%;height:100%;display:block}</style>
+<title>Valley Lite</title>
+<style>
+html,body{margin:0;height:100%;background:#0f1418;color:#eaf2f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+#root{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto}
+header,footer{background:#0b1014;border-bottom:1px solid #070b0e;padding:8px 12px;font-size:14px;display:flex;align-items:center;gap:12px}footer{border-top:1px solid #070b0e;border-bottom:none;justify-content:space-between}
+.k{display:inline-block;border:1px solid #33414c;border-radius:4px;padding:0 6px;background:#0b0f12;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+.btn{cursor:pointer;border:1px solid #33414c;border-radius:6px;background:#0e1418;color:#eaf2f9;padding:6px 10px} .btn:hover{background:#121a20}
+canvas{width:100%;height:100%;display:block}
+#hotbar{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:8px}
+.slot{width:56px;height:56px;border:1px solid #2e3a45;border-radius:8px;background:#0b1115;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cfe2f5} .slot.active{outline:2px solid #7dc3ff} .small{font-size:12px;opacity:.8}
+.badge{border:1px solid #2e3a45;border-radius:999px;padding:2px 8px;background:#0b1115}
+.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#0c1216;border:1px solid #2e3a45;border-radius:10px;min-width:320px;max-width:90vw;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.modal h3{margin:4px 0 10px 0;font-size:16px} .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.item{flex:1;min-width:140px;border:1px solid #2e3a45;border-radius:8px;padding:8px;background:#0b1115;display:flex;align-items:center;justify-content:space-between}
+.link{cursor:pointer;color:#9ad4ff;text-decoration:underline}
+</style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<script>","use strict";(()=>{const TILE=28,W=64,H=64,DAY=360,TOOLS=["hoe","water","seed","hand"];const CROPS={turnip:{n:"Turnip",buy:20,sell:45,d:3,c:"#b8e07c"}};const S={w:mk(W,H),p:{x:10,y:10,fx:0,fy:1,spd:5,tool:0,seed:"turnip",money:200,sd:{turnip:6}},t:{d:1,s:8*3600},cam:{x:10*TILE,y:10*TILE},ui:{m:""},loc:{bed:{x:7,y:7},house:{x:5,y:5,w:7,h:7}}};function mk(w,h){const a=Array(h);for(let y=0;y<h;y++){const r=Array(w);for(let x=0;x<w;x++){r[x]={t:"grass",wet:false,c:null,b:false};}a[y]=r;}return a;}function B(x,y){return x>=0&&y>=0&&x<W&&y<H;}function T(x,y){return S.w[y][x];}function till(x,y){if(!B(x,y))return false;const t=T(x,y);if(t.t==="grass"){t.t="soil";t.wet=false;return true;}return false;}function water(x,y){if(!B(x,y))return false;const t=T(x,y);if(t.t==="soil"||t.t==="crop"){t.wet=true;return true;}return false;}function plant(x,y,k){if(!B(x,y))return false;const t=T(x,y);if((t.t==="soil"||t.t==="crop")&&!t.c){t.t="crop";t.c={k,stage:0,days:0};return true;}return false;}function harvest(x,y){const t=T(x,y);if(t&&t.c){const d=CROPS[t.c.k];if(t.c.stage>=d.d){t.c=null;t.t="soil";t.wet=false;S.p.money+=d.sell;msg("Sold "+d.n+" +$"+d.sell);return true;}}return false;}function endDay(){for(let y=0;y<H;y++){for(let x=0;x<W;x++){const t=T(x,y);if(t.c&&t.wet){t.c.days++;const d=CROPS[t.c.k];t.c.stage=Math.min(d.d,t.c.days);}t.wet=false;}}S.t.d++;S.t.s=6*3600;}const I={L:false,R:false,U:false,D:false,A:false,E:false,keys:new Set()};addEventListener("keydown",e=>{I.keys.add(e.key);if(["ArrowLeft","a","A"].includes(e.key))I.L=true;if(["ArrowRight","d","D"].includes(e.key))I.R=true;if(["ArrowUp","w","W"].includes(e.key))I.U=true;if(["ArrowDown","s","S"].includes(e.key))I.D=true;if([" ","e","E"].includes(e.key))I.A=true;if(["1","2","3","4"].includes(e.key))S.p.tool=parseInt(e.key)-1;if(e.key==="q"||e.key==="Q")S.p.seed=(S.p.seed==="turnip"?"turnip":"turnip");if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","e","E"].includes(e.key))e.preventDefault();});addEventListener("keyup",e=>{I.keys.delete(e.key);if(["ArrowLeft","a","A"].includes(e.key))I.L=false;if(["ArrowRight","d","D"].includes(e.key))I.R=false;if(["ArrowUp","w","W"].includes(e.key))I.U=false;if(["ArrowDown","s","S"].includes(e.key))I.D=false;if([" ","e","E"].includes(e.key))I.A=false;});const C=document.getElementById("game"),X=C.getContext("2d");function fit(){const dpr=Math.max(1,Math.min(2,devicePixelRatio||1));const r=C.getBoundingClientRect();C.width=Math.floor(r.width*dpr);C.height=Math.floor(r.height*dpr);X.setTransform(dpr,0,0,dpr,0,0);}addEventListener("resize",fit);function draw(){X.fillStyle="#1a2b38";X.fillRect(0,0,C.width,C.height);const left=S.cam.x-C.width/2,top=S.cam.y-C.height/2;const wTiles=Math.ceil(C.width/TILE)+2,hTiles=Math.ceil(C.height/TILE)+2;const sx=Math.floor(left/TILE),sy=Math.floor(top/TILE);for(let ty=0;ty<hTiles;ty++){for(let tx=0;tx<wTiles;tx++){const wx=sx+tx,wy=sy+ty;if(!B(wx,wy))continue;const t=T(wx,wy);const px=tx*TILE-(left%TILE),py=ty*TILE-(top%TILE);if(t.t==="grass")X.fillStyle="#244d2b";else if(t.t==="soil"||t.t==="crop")X.fillStyle="#5a3b2e";else X.fillStyle="#2b4f31";X.fillRect(px,py,TILE,TILE);if((t.t==="soil"||t.t==="crop")&&t.wet){X.fillStyle="rgba(80,120,200,.25)";X.fillRect(px,py,TILE,TILE);}if(t.t==="crop"&&t.c){const d=CROPS[t.c.k];const h=Math.floor((t.c.stage/d.d)*(TILE-6))+4;X.fillStyle=d.c;X.fillRect(px+6,py+(TILE-h),TILE-12,h);}X.strokeStyle="rgba(0,0,0,.08)";X.strokeRect(px,py,TILE,TILE);}}drawPlayer();}function drawPlayer(){const left=S.cam.x-C.width/2,top=S.cam.y-C.height/2;const px=S.p.x*TILE-left,py=S.p.y*TILE-top;X.fillStyle="rgba(0,0,0,.25)";X.beginPath();X.ellipse(px,py+9,9,4,0,0,6.283);X.fill();X.fillStyle="#e2b58d";X.fillRect(px-6,py-16,12,12);X.fillStyle="#3b6ea8";X.fillRect(px-8,py-6,16,12);X.fillStyle="#333";X.fillRect(px-8,py+6,16,8);}function update(dt){S.t.s+=dt*DAY;const dx=(I.R?1:0)-(I.L?1:0),dy=(I.D?1:0)-(I.U?1:0);const n=Math.hypot(dx,dy)||1;const nx=dx/n,ny=dy/n;S.p.x=Math.max(0,Math.min(W-0.001,S.p.x+nx*S.p.spd*dt));S.p.y=Math.max(0,Math.min(H-0.001,S.p.y+ny*S.p.spd*dt));if(dx||dy){S.p.fx=nx;S.p.fy=ny;}S.cam.x+=((S.p.x*TILE)-S.cam.x)*.2;S.cam.y+=((S.p.y*TILE)-S.cam.y)*.2;if(I.A){interact();I.A=false;}}function interact(){const tx=Math.floor(S.p.x+Math.sign(S.p.fx||0)),ty=Math.floor(S.p.y+Math.sign(S.p.fy||0));const tool=TOOLS[S.p.tool];if(tool==="hoe"){till(tx,ty);}else if(tool==="water"){water(tx,ty);}else if(tool==="seed"){if(S.p.sd.turnip>0){if(plant(tx,ty,"turnip")){S.p.sd.turnip--;}}}else if(tool==="hand"){harvest(tx,ty);} }let lt=0;function loop(ts){if(!lt)lt=ts;const dt=(ts-lt)/1000;lt=ts;update(dt);draw();requestAnimationFrame(loop);}fit();requestAnimationFrame(loop);} )();
+<div id="root">
+  <header>
+    <strong>Valley Lite</strong>
+    <span>Move <span class="k">WASD</span>/<span class="k">Arrows</span></span>
+    <span>Use <span class="k">Space</span>/<span class="k">E</span></span>
+    <span>Tools <span class="k">1</span> Hoe <span class="k">2</span> Water <span class="k">3</span> Seeds <span class="k">4</span> Hand</span>
+    <span>Sleep: stand on bed + <span class="k">Enter</span></span>
+    <button id="saveBtn" class="btn">Save</button>
+    <button id="resetBtn" class="btn">Reset</button>
+  </header>
+  <div style="position:relative">
+    <canvas id="game"></canvas>
+    <div id="hotbar"></div>
+  </div>
+  <footer>
+    <span class="badge" id="tip">Tip: Till, water, plant, sleep to grow. Press E at shop.</span>
+    <span id="status"></span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+// -------- Config --------
+const TILE=28, MAP_W=72, MAP_H=72;
+const DAY_RATE=6*60; // in-game sec per real sec
+const CAMERA_LERP=0.2;
+const SAVE_KEY="valley-lite-save-v2";
+const TOOLS=["hoe","water","seed","hand"];
+const CROPS={
+  turnip:{name:"Turnip",buy:20,sell:45,days:3,color:"#b8e07c"},
+  potato:{name:"Potato",buy:50,sell:95,days:5,color:"#d1b07a"}
+};
+
+// -------- State --------
+const S={
+  world:makeWorld(MAP_W,MAP_H),
+  player:{x:10,y:10,fx:0,fy:1,speed:5,tool:0,seed:"turnip",money:200,seeds:{turnip:6,potato:0}},
+  time:{day:1,sec:8*3600},
+  cam:{x:10*TILE,y:10*TILE},
+  ui:{msg:"",shop:false},
+  loc:{bed:{x:7,y:7},house:{x:5,y:5,w:7,h:7},shop:{x:20,y:8}}
+};
+
+function makeWorld(w,h){const a=new Array(h);for(let y=0;y<h;y++){const r=new Array(w);for(let x=0;x<w;x++){r[x]={type:"grass",wet:false,crop:null,block:false};}a[y]=r;}return a;}
+function inB(x,y){return x>=0&&y>=0&&x<MAP_W&&y<MAP_H;}
+function tile(x,y){return S.world[y][x];}
+function setType(x,y,t){if(inB(x,y))S.world[y][x].type=t;}
+
+function bootstrap(){// paths
+for(let x=7;x<=S.loc.shop.x;x++) setType(x,9,"path"); for(let y=7;y<=9;y++) setType(S.loc.shop.x,y,"path");
+// farm area
+for(let y=14;y<28;y++){for(let x=5;x<28;x++){setType(x,y,((x+y)%7===0)?"path":"grass");}}
+// scatter trees
+for(let i=0;i<45;i++){const x=rand(0,MAP_W-1),y=rand(0,MAP_H-1);if(dist(x,y,S.player.x,S.player.y)>10 && tile(x,y).type==="grass"){tile(x,y).type="tree";tile(x,y).block=true;}}
+// few rocks
+for(let i=0;i<20;i++){const x=rand(0,MAP_W-1),y=rand(0,MAP_H-1);if(tile(x,y).type==="grass"){tile(x,y).type="rock";tile(x,y).block=true;}}
+}
+
+// -------- Persistence --------
+function canSave(){try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return true;}catch(e){return false;}}
+function save(){if(!canSave()){toast("Saving unavailable");return;}localStorage.setItem(SAVE_KEY,JSON.stringify(S));toast("Saved");}
+function load(){if(!canSave())return false;const r=localStorage.getItem(SAVE_KEY);if(!r)return false;try{const d=JSON.parse(r);if(d&&d.world){Object.assign(S,d);return true;}}catch(e){}return false;}
+
+// -------- World actions --------
+function canTill(t){return t.type==="grass"||t.type==="path";}
+function till(x,y){if(!inB(x,y))return false;const t=tile(x,y);if(canTill(t)){t.type="soil";t.wet=false;return true;}return false;}
+function water(x,y){if(!inB(x,y))return false;const t=tile(x,y);if(t.type==="soil"||t.type==="crop"){t.wet=true;return true;}return false;}
+function plant(x,y,key){if(!inB(x,y))return false;const t=tile(x,y);if((t.type==="soil"||t.type==="crop")&&!t.crop){t.type="crop";t.crop={k:key,stage:0,days:0};return true;}return false;}
+function harvest(x,y){const t=tile(x,y);if(t&&t.crop){const d=CROPS[t.crop.k];if(t.crop.stage>=d.days){t.crop=null;t.type="soil";t.wet=false;S.player.money+=d.sell;toast("Sold "+d.name+" +$"+d.sell);return true;}}return false;}
+function endDay(){for(let y=0;y<MAP_H;y++){for(let x=0;x<MAP_W;x++){const t=tile(x,y);if(t.crop&&t.wet){t.crop.days++;const d=CROPS[t.crop.k];t.crop.stage=Math.min(d.days,t.crop.days);}t.wet=false;}}S.time.day++;S.time.sec=6*3600;save();}
+
+// -------- Input --------
+const Input={L:false,R:false,U:false,D:false,act:false,enter:false,esc:false,keys:new Set()};
+addEventListener("keydown",e=>{Input.keys.add(e.key);if(["ArrowLeft","a","A"].includes(e.key))Input.L=true; if(["ArrowRight","d","D"].includes(e.key))Input.R=true; if(["ArrowUp","w","W"].includes(e.key))Input.U=true; if(["ArrowDown","s","S"].includes(e.key))Input.D=true; if([" ","e","E"].includes(e.key))Input.act=true; if(e.key==="Enter")Input.enter=true; if(e.key==="Escape")Input.esc=true; if(e.key==="1")S.player.tool=0; if(e.key==="2")S.player.tool=1; if(e.key==="3")S.player.tool=2; if(e.key==="4")S.player.tool=3; if(e.key==="q"||e.key==="Q")S.player.seed=(S.player.seed==="turnip"?"potato":"turnip"); if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","e","E"].includes(e.key)) e.preventDefault();});
+addEventListener("keyup",e=>{Input.keys.delete(e.key);if(["ArrowLeft","a","A"].includes(e.key))Input.L=false; if(["ArrowRight","d","D"].includes(e.key))Input.R=false; if(["ArrowUp","w","W"].includes(e.key))Input.U=false; if(["ArrowDown","s","S"].includes(e.key))Input.D=false; if([" ","e","E"].includes(e.key))Input.act=false; if(e.key==="Enter")Input.enter=false; if(e.key==="Escape")Input.esc=false;});
+
+// -------- Utils --------
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function dist(ax,ay,bx,by){return Math.hypot(ax-bx,ay-by);}
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function fmtTime(sec){const t=Math.floor(sec),h=((t/3600)|0)%24,m=((t%3600)/60)|0;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");}
+function toast(m){S.ui.msg=m;setTimeout(()=>{if(S.ui.msg===m)S.ui.msg="";},1800);}
+
+// -------- Render --------
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+function fit(){const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));const r=canvas.getBoundingClientRect();canvas.width=Math.floor(r.width*dpr);canvas.height=Math.floor(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);} addEventListener("resize",fit);
+function skyColor(){const h=(S.time.sec/3600)%24;const f=h<6?0.22:h>20?0.22:1-Math.abs(h-13)/7;const c=[60+40*f|0,90+60*f|0,120+80*f|0];return `rgb(${c[0]},${c[1]},${c[2]})`;}
+function draw(){ctx.fillStyle=skyColor();ctx.fillRect(0,0,canvas.width,canvas.height);const left=S.cam.x-canvas.width/2, top=S.cam.y-canvas.height/2;const wTiles=Math.ceil(canvas.width/TILE)+2, hTiles=Math.ceil(canvas.height/TILE)+2;const sx=Math.floor(left/TILE), sy=Math.floor(top/TILE);for(let ty=0;ty<hTiles;ty++){for(let tx=0;tx<wTiles;tx++){const wx=sx+tx, wy=sy+ty; if(!inB(wx,wy))continue; const t=tile(wx,wy); const px=tx*TILE-(left%TILE), py=ty*TILE-(top%TILE); // ground
+if(t.type==="grass")ctx.fillStyle="#244d2b"; else if(t.type==="path")ctx.fillStyle="#7a6a52"; else if(t.type==="soil"||t.type==="crop")ctx.fillStyle="#5a3b2e"; else if(t.type==="tree")ctx.fillStyle="#1f3d24"; else if(t.type==="rock")ctx.fillStyle="#3a3d46"; else ctx.fillStyle="#2b4f31"; ctx.fillRect(px,py,TILE,TILE); if((t.type==="soil"||t.type==="crop")&&t.wet){ctx.fillStyle="rgba(90,120,210,0.25)";ctx.fillRect(px,py,TILE,TILE);} if(t.type==="crop"&&t.crop){const d=CROPS[t.crop.k];const h=Math.floor((t.crop.stage/d.days)*(TILE-6))+4;ctx.fillStyle=d.color;ctx.fillRect(px+6,py+(TILE-h),TILE-12,h); ctx.fillStyle="#2f6b3a";ctx.fillRect(px+TILE/2-1,py+(TILE-h)-3,2,3);} if(t.type==="tree"){ctx.fillStyle="#2e6a37";ctx.beginPath();ctx.arc(px+TILE/2,py+TILE/2,TILE*0.42,0,6.283);ctx.fill();} if(t.type==="rock"){ctx.fillStyle="#9aa2ad";ctx.beginPath();ctx.moveTo(px+6,py+TILE-6);ctx.lineTo(px+TILE-6,py+TILE-8);ctx.lineTo(px+TILE-10,py+6);ctx.lineTo(px+8,py+8);ctx.closePath();ctx.fill();} ctx.strokeStyle="rgba(0,0,0,0.07)";ctx.strokeRect(px,py,TILE,TILE);} } drawHouse(); drawShop(); drawPlayer(); drawUI();}
+function drawHouse(){const l=S.loc.house;const left=S.cam.x-canvas.width/2, top=S.cam.y-canvas.height/2;const x=l.x*TILE-left, y=l.y*TILE-top;ctx.fillStyle="#7b4934";ctx.fillRect(x,y,l.w*TILE,l.h*TILE);ctx.fillStyle="#a86445";ctx.fillRect(x+8,y+8,l.w*TILE-16,l.h*TILE-16);const b=S.loc.bed;const bx=b.x*TILE-left, by=b.y*TILE-top;ctx.fillStyle="#cfe7ff";ctx.fillRect(bx,by,TILE,TILE);ctx.fillStyle="#fff";ctx.font="12px ui-monospace,monospace";ctx.textAlign="center";ctx.fillText("Bed",bx+TILE/2,by+TILE/2+4);}
+function drawShop(){const d=S.loc.shop;const left=S.cam.x-canvas.width/2, top=S.cam.y-canvas.height/2;const x=(d.x-1)*TILE-left, y=(d.y-2)*TILE-top;ctx.fillStyle="#3d597a";ctx.fillRect(x,y,TILE*3,TILE*3);ctx.fillStyle="#cde6ff";ctx.fillRect(x+TILE,y+TILE,TILE,TILE);ctx.fillStyle="#fff";ctx.font="12px ui-monospace,monospace";ctx.textAlign="center";ctx.fillText("SHOP",x+TILE*1.5,y+TILE*0.7);}
+function drawPlayer(){const left=S.cam.x-canvas.width/2, top=S.cam.y-canvas.height/2;const px=S.player.x*TILE-left, py=S.player.y*TILE-top;ctx.fillStyle="rgba(0,0,0,0.25)";ctx.beginPath();ctx.ellipse(px,py+10,10,5,0,0,6.283);ctx.fill();ctx.fillStyle="#e0b38b";ctx.fillRect(px-6,py-16,12,12);ctx.fillStyle="#3b6ea8";ctx.fillRect(px-8,py-6,16,12);ctx.fillStyle="#333";ctx.fillRect(px-8,py+6,16,8);const tool=TOOLS[S.player.tool];ctx.fillStyle="rgba(0,0,0,0.4)";ctx.fillRect(px-26,py-38,52,16);ctx.fillStyle="#fff";ctx.font="12px ui-monospace,monospace";ctx.textAlign="center";ctx.fillText(tool.toUpperCase(),px,py-26);drawTarget();}
+function getTargetTile(){const dirX=Math.sign(S.player.fx||0), dirY=Math.sign(S.player.fy||0); const tx=Math.floor(S.player.x+dirX), ty=Math.floor(S.player.y+dirY); return {tx,ty};}
+function drawTarget(){const t=getTargetTile(); if(!inB(t.tx,t.ty)) return; const left=S.cam.x-canvas.width/2, top=S.cam.y-canvas.height/2; const px=t.tx*TILE-left, py=t.ty*TILE-top; ctx.strokeStyle="rgba(255,255,255,0.6)"; ctx.lineWidth=2; ctx.strokeRect(px+1,py+1,TILE-2,TILE-2); ctx.lineWidth=1;}
+function drawUI(){const m=12;ctx.fillStyle="rgba(0,0,0,0.45)";ctx.fillRect(m,m,240,68);ctx.fillStyle="#fff";ctx.font="14px ui-monospace,monospace";ctx.textAlign="left";ctx.fillText("Day "+S.time.day+"  "+fmtTime(S.time.sec),m+8,m+22);ctx.fillText("$"+S.player.money,m+8,m+40);ctx.fillText("Seed:"+S.player.seed+"  T:"+S.player.seeds.turnip+" P:"+S.player.seeds.potato,m+8,m+58); if(S.ui.msg){const w=ctx.measureText(S.ui.msg).width+24;const x=canvas.width/2-w/2, y=canvas.height-60;ctx.fillStyle="rgba(0,0,0,0.6)";ctx.fillRect(x,y-18,w,28);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.fillText(S.ui.msg,canvas.width/2,y);} if(onCell(S.loc.bed)){prompt("Press Enter to sleep");} else if(nearCell(S.loc.shop,2)){prompt("Press E to open Shop");}}
+function prompt(t){const w=Math.max(240,ctx.measureText(t).width+24);const x=canvas.width/2-w/2, y=24;ctx.fillStyle="rgba(0,0,0,0.6)";ctx.fillRect(x,y,w,28);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.fillText(t,canvas.width/2,y+19);}
+
+// -------- Game loop --------
+let lt=0; function loop(ts){if(!lt)lt=ts; const dt=(ts-lt)/1000; lt=ts; update(dt); draw(); requestAnimationFrame(loop);}
+function update(dt){S.time.sec+=dt*DAY_RATE; const dx=(Input.R?1:0)-(Input.L?1:0), dy=(Input.D?1:0)-(Input.U?1:0); const n=Math.hypot(dx,dy)||1; const nx=dx/n, ny=dy/n; const nextX=clamp(S.player.x+nx*S.player.speed*dt,0,MAP_W-0.001); const nextY=clamp(S.player.y+ny*S.player.speed*dt,0,MAP_H-0.001); if(!isBlocked(nextX,S.player.y)) S.player.x=nextX; if(!isBlocked(S.player.x,nextY)) S.player.y=nextY; if(dx||dy){S.player.fx=nx;S.player.fy=ny;} S.cam.x=lerp(S.cam.x,S.player.x*TILE,CAMERA_LERP); S.cam.y=lerp(S.cam.y,S.player.y*TILE,CAMERA_LERP); if(Input.act){if(S.ui.shop){} else handleInteract(); Input.act=false;} if(Input.enter && onCell(S.loc.bed)){endDay(); toast("New Day "+S.time.day); Input.enter=false;} if(Input.esc && S.ui.shop){S.ui.shop=false;updateShop(false);} const hour=Math.floor((S.time.sec/3600)%24); document.getElementById("status").textContent=(hour<6?"It's late. Consider sleeping.":"");}
+function isBlocked(x,y){const tx=Math.floor(x), ty=Math.floor(y); if(!inB(tx,ty))return true; const t=tile(tx,ty); if(t.block) return true; // house walls
+const h=S.loc.house; if(tx>=h.x && tx<h.x+h.w && ty>=h.y && ty<h.y+h.h){ // inside allowed
+  return false; } return false;}
+function onCell(c){return Math.floor(S.player.x)===c.x && Math.floor(S.player.y)===c.y;}
+function nearCell(c,r){return dist(S.player.x,S.player.y,c.x,c.y)<=r;}
+function handleInteract(){ if(nearCell(S.loc.shop,2)){S.ui.shop=true;updateShop(true);return;} const tx=Math.floor(S.player.x+Math.sign(S.player.fx)), ty=Math.floor(S.player.y+Math.sign(S.player.fy)); if(!inB(tx,ty))return; const tool=TOOLS[S.player.tool]; if(tool==="hoe"){ if(!till(tx,ty)) toast("Can't till here"); } else if(tool==="water"){ if(!water(tx,ty)) toast("Needs soil"); } else if(tool==="seed"){ const key=S.player.seed; if(S.player.seeds[key]>0){ if(plant(tx,ty,key)){ S.player.seeds[key]--; } else toast("Plant on soil"); } else toast("No seeds"); } else if(tool==="hand"){ if(!harvest(tx,ty)) toast("Not ready"); } }
+
+// -------- Shop overlay --------
+function updateShop(show){let m=document.getElementById("shopModal"); if(!show){ if(m) m.remove(); return;} if(m) m.remove(); m=document.createElement("div"); m.id="shopModal"; m.className="modal"; m.innerHTML=`<h3>Shop</h3>
+  <div class="row">
+    <div class="item"><div><div><strong>Turnip Seed</strong></div><div class="small">$${CROPS.turnip.buy}</div></div><button class="btn" id="buyTurnip">Buy</button></div>
+    <div class="item"><div><div><strong>Potato Seed</strong></div><div class="small">$${CROPS.potato.buy}</div></div><button class="btn" id="buyPotato">Buy</button></div>
+  </div>
+  <div style="margin-top:10px" class="small">Press Esc or click outside to close</div>`; document.body.appendChild(m); document.getElementById("buyTurnip").onclick=()=>buy("turnip"); document.getElementById("buyPotato").onclick=()=>buy("potato"); m.addEventListener("click",e=>{if(e.target===m){S.ui.shop=false;updateShop(false);}});}
+function buy(key){const d=CROPS[key]; if(S.player.money>=d.buy){ S.player.money-=d.buy; S.player.seeds[key]++; toast("Bought "+d.name+" seed"); } else toast("Not enough $$");}
+
+// -------- Hotbar --------
+function renderHotbar(){const hb=document.getElementById("hotbar"); hb.innerHTML=""; const entries=[{label:"HOE",sub:"1"},{label:"WATER",sub:"2"},{label:"SEED",sub:"3"},{label:"HAND",sub:"4"}]; entries.forEach((e,i)=>{const d=document.createElement("div"); d.className="slot"+(S.player.tool===i?" active":""); d.innerHTML=`<div>${e.label}</div><div class="small">${e.sub}</div>`; hb.appendChild(d);}); const seedInfo=document.createElement("div"); seedInfo.className="slot"; seedInfo.innerHTML=`<div>Seed</div><div class="small">Q: ${S.player.seed}</div>`; hb.appendChild(seedInfo);}
+setInterval(renderHotbar,300);
+
+// -------- Boot --------
+function init(){fit(); if(!load()){bootstrap(); save();} document.getElementById("saveBtn").onclick=save; document.getElementById("resetBtn").onclick=()=>{localStorage.removeItem(SAVE_KEY); location.reload();}; renderHotbar(); requestAnimationFrame(loop);} init();
 </script>
 </body>
 </html>
